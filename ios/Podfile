@@ -1,44 +1,46 @@
-# 1. Especificar plataforma global
 platform :ios, '15.0'
 
-# 2. Lógica para encontrar el SDK de Flutter dinámicamente
-def flutter_root
-  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
-  unless File.exist?(generated_xcode_build_settings_path)
-    raise "Generated.xcconfig no encontrado. Ejecuta 'flutter pub get' primero."
-  end
+# Lógica mejorada para encontrar el SDK de Flutter
+def find_flutter_root
+  # Plan A: Usar la variable de entorno del sistema (Codemagic la tiene)
+  return ENV['FLUTTER_ROOT'] if ENV['FLUTTER_ROOT']
 
-  File.foreach(generated_xcode_build_settings_path) do |line|
-    matches = line.match(/\AFLUTTER_ROOT=(.*)\z/)
-    return matches[1].strip if matches
+  # Plan B: Leer Generated.xcconfig con limpieza de caracteres de Windows
+  config_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  if File.exist?(config_path)
+    File.foreach(config_path) do |line|
+      # Esta Regex es más flexible con espacios y finales de línea
+      if line =~ /FLUTTER_ROOT\s*=\s*(.*)/
+        path = $1.strip.gsub(/['"]/, '') # Limpia comillas y espacios
+        return path unless path.empty?
+      end
+    end
   end
-  raise "FLUTTER_ROOT no encontrado en Generated.xcconfig"
+  
+  # Si todo falla, error descriptivo
+  raise "No se encontró FLUTTER_ROOT. Asegúrate de que el archivo ios/Flutter/Generated.xcconfig existe y no está corrupto."
 end
 
-# 3. Cargar el script de ayuda desde el SDK de Flutter
+# Cargar podhelper
+flutter_root = find_flutter_root
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
-# Evitar conflictos de rutas en servidores remotos
 install! 'cocoapods', :deterministic_uuids => false
 
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Instalar pods de Flutter y Firebase
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
-# 4. Forzar iOS 15.0 en todas las dependencias
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
     target.build_configurations.each do |config|
-      # Forzar el target a 15.0 para evitar errores de Firebase
+      # Forzar iOS 15.0 para Firebase y todos los pods
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-      
-      # Configuraciones recomendadas para Mac M2 (Codemagic)
       config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
       config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
