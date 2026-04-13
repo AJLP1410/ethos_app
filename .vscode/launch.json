@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Ethos App (Chrome)",
+        "request": "launch",
+        "type": "dart",
+        "args": [
+          "--web-port",
+          "51944"
+        ]
+      }
+    ]
+  }

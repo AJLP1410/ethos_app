@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "222242968460",
+    "project_id": "ethos-e4dfd",
+    "storage_bucket": "ethos-e4dfd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222242968460:android:3d2975bf571cb182f53ca9",
+        "android_client_info": {
+          "package_name": "com.example.u_flutter_packages"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRD7GOdULhCBnd_5mCRrzMvp75PXo9Sfs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
