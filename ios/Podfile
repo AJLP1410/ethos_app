@@ -1,22 +1,37 @@
-# Esta línea busca el archivo de dependencias que Flutter genera automáticamente
-load File.join(File.dirname(File.realpath(__FILE__)), '..', '.flutter-plugins-dependencies')
-
+# 1. Definir explícitamente la plataforma a iOS 15.0
 platform :ios, '15.0'
 
+# 2. Configuración dinámica para encontrar el SDK de Flutter en Codemagic/Mac
+# Esto evita el error "cannot load such file"
+target_control_path = File.expand_path('..', __FILE__)
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), target_control_path)
+
+# Impedir que CocoaPods use rutas absolutas que rompan la compilación en la nube
+install! 'cocoapods', :deterministic_uuids => false
+
 target 'Runner' do
+  # 3. Importante: Firebase requiere frameworks dinámicos
   use_frameworks!
   use_modular_headers!
 
-  # Instalación de los pods de los plugins (Firestore, Auth, etc.)
+  # Instala los plugins de Flutter (Esto resuelve el "Module cloud_firestore not found")
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
+# 4. Hook post_install para forzar la compatibilidad de versiones
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    
     target.build_configurations.each do |config|
-      # Mantenemos el target en 15.0 para evitar el error de Firestore
+      # Forzar iOS 15.0 en todos los pods de dependencias (Firebase, etc.)
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      
+      # Corregir error de arquitectura común en Mac M2 (opcional pero recomendado)
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+      
+      # Desactivar bitcode ya que Firebase y Flutter ya no lo requieren/soportan bien
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
   end
 end
