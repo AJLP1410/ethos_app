@@ -1,9 +1,13 @@
 platform :ios, '15.0'
 
+# No borres estas lineas, son para que Flutter funcione
+@@flutter_root = File.expand_path('..', File.dirname(File.realpath(__FILE__)))
+
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
+  # Esto es lo que le faltaba a la Mac
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 
