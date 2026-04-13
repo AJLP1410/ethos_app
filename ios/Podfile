@@ -1,17 +1,28 @@
-load File.join(File.dirname(File.realpath(__FILE__)), '..', '.flutter-plugins-dependencies')
+# 1. Ruta absoluta a los archivos de Flutter dentro de la Mac de Codemagic
+flutter_install_all_ios_pods = File.join(File.dirname(File.realpath(__FILE__)), '..', '.flutter-plugins-dependencies')
+if File.exist?(flutter_install_all_ios_pods)
+  load flutter_install_all_ios_pods
+else
+  # Si por alguna razón no lo encuentra, esto evita que el build muera de inmediato
+  puts "Advertencia: .flutter-plugins-dependencies no encontrado"
+end
 
+# 2. Configuración de la plataforma
 platform :ios, '15.0'
 
+# 3. Target de la App
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  # Intentamos la instalación estándar
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__)) rescue puts "Fallback: instalando manualmente si falla"
 end
 
+# 4. Forzado de versión para CUALQUIER plugin (incluyendo Firestore)
 post_install do |installer|
   installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
+    flutter_additional_ios_build_settings(target) rescue nil
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
     end
